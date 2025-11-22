@@ -92,8 +92,8 @@ function GameEngine({ onRestart, autoStart }) {
       if (!gameState.current.isRunning) return;
 
       const state = gameState.current;
-
       const move = -state.tilt * 20;
+      
       state.playerX = Math.max(0, Math.min(state.playerX + move, screenWidth - PLAYER_WIDTH));
 
       state.bullets = state.bullets
