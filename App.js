@@ -1,5 +1,3 @@
-
-
 import { Accelerometer } from "expo-sensors";
 import { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Dimensions, Text, Pressable, TouchableOpacity, ImageBackground } from "react-native";
@@ -28,11 +26,10 @@ export default function App() {
 
   return (
     <ImageBackground 
-      source={require('./assets/background.jpg')} // Make sure this matches your file extension (.jpg or .png)
+      source={require('./assets/background.jpg')}
       style={styles.background}
       resizeMode="cover"
     >
-      {/* [NEW] autoStart prop: If gameId > 0 (we restarted), start instantly. Otherwise wait. */}
       <GameEngine 
         key={gameId} 
         onRestart={() => setGameId(gameId + 1)} 
@@ -45,7 +42,6 @@ export default function App() {
 function GameEngine({ onRestart, autoStart }) {
   const [tick, setTick] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
-  // [NEW] State to track if we are in the menu or playing
   const [isGameStarted, setIsGameStarted] = useState(autoStart);
 
   const gameState = useRef({
@@ -55,7 +51,7 @@ function GameEngine({ onRestart, autoStart }) {
     score: 0,
     tilt: 0,
     isRunning: true,
-    isGameStarted: autoStart, // [NEW] Loop checks this ref
+    isGameStarted: autoStart,
   });
 
   const playSound = async (type) => {
@@ -65,7 +61,6 @@ function GameEngine({ onRestart, autoStart }) {
         fail: require('./assets/gameover.mp3'), 
       };
       
-      // Safety check: Comment this out when you have real files
       // return; 
 
       const { sound } = await Audio.Sound.createAsync(soundMap[type]);
@@ -74,7 +69,6 @@ function GameEngine({ onRestart, autoStart }) {
         if (status.didJustFinish) await sound.unloadAsync();
       });
     } catch (error) {
-       // console.log("Sound error", error);
     }
   };
 
@@ -90,7 +84,6 @@ function GameEngine({ onRestart, autoStart }) {
     let animationFrameId;
 
     const loop = () => {
-      // [NEW] If game hasn't started, just spin the loop without updating logic
       if (!gameState.current.isGameStarted) {
         animationFrameId = requestAnimationFrame(loop);
         return;
@@ -100,16 +93,13 @@ function GameEngine({ onRestart, autoStart }) {
 
       const state = gameState.current;
 
-      // 1. Update Player
       const move = -state.tilt * 20;
       state.playerX = Math.max(0, Math.min(state.playerX + move, screenWidth - PLAYER_WIDTH));
 
-      // 2. Update Bullets
       state.bullets = state.bullets
         .map((b) => ({ ...b, y: b.y - 15 }))
         .filter((b) => b.y > -BULLET_HEIGHT);
 
-      // 3. Update Enemies
       state.enemies = state.enemies.map((e) => ({ ...e, y: e.y + 5 }));
 
       if (state.enemies.some((e) => e.y > screenHeight)) {
@@ -124,7 +114,6 @@ function GameEngine({ onRestart, autoStart }) {
         });
       }
 
-      // 4. Collisions
       const activeBullets = [];
       const activeEnemies = [...state.enemies];
       
@@ -167,14 +156,12 @@ function GameEngine({ onRestart, autoStart }) {
     playSound('fail');
   };
 
-  // [NEW] Start Game Function
   const startGame = () => {
     gameState.current.isGameStarted = true;
     setIsGameStarted(true);
   };
 
   const fireBullet = () => {
-    // [NEW] Prevent shooting if game hasn't started or is over
     if (!isGameStarted || isGameOver) return;
     playSound('shoot');
     gameState.current.bullets.push({
@@ -189,7 +176,6 @@ function GameEngine({ onRestart, autoStart }) {
   return (
     <Pressable style={styles.container} onPress={fireBullet}>
       
-      {/* Only show HUD and Entities if game started */}
       {isGameStarted && (
         <>
           <Text style={styles.score}>Score: {score}</Text>
@@ -203,7 +189,6 @@ function GameEngine({ onRestart, autoStart }) {
         </>
       )}
 
-      {/* [NEW] Start Screen Overlay */}
       {!isGameStarted && (
         <View style={styles.startScreenOverlay}>
           <Text style={styles.gameTitle}>SPACE SHOOTER</Text>
@@ -214,7 +199,6 @@ function GameEngine({ onRestart, autoStart }) {
         </View>
       )}
 
-      {/* Game Over Overlay */}
       {isGameOver && (
         <View style={styles.gameOverOverlay}>
           <Text style={styles.gameOverText}>GAME OVER</Text>
@@ -236,7 +220,6 @@ const styles = StyleSheet.create({
   bullet: { position: "absolute", width: BULLET_WIDTH, height: BULLET_HEIGHT, backgroundColor: "white", borderRadius: 5 },
   enemy: { position: "absolute", width: ENEMY_WIDTH, height: ENEMY_HEIGHT, backgroundColor: "red" },
   
-  // Game Over Styles
   gameOverOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.85)', 
@@ -247,10 +230,9 @@ const styles = StyleSheet.create({
   restartButton: { backgroundColor: '#000', paddingHorizontal: 30, paddingVertical: 15, borderRadius: 10 },
   restartText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
 
-  // [NEW] Start Screen Styles
   startScreenOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Darker overlay for title screen
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center', alignItems: 'center', zIndex: 100,
   },
   gameTitle: { fontSize: 42, fontWeight: '900', color: 'white', marginBottom: 10, letterSpacing: 2 },
